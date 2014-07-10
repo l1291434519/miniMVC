@@ -10,7 +10,7 @@ class app{
 		$this->appPath = dirname(dirname($config));
 		$this->_config = require $config;
 		$this->startSession();
-		$this->startLys();
+		$this->filter();
 		
 	}
 	
@@ -19,12 +19,10 @@ class app{
 			session_start();
 		}
 	}
-	
-	public function startLys(){
-		if (!empty($_GET['ly'])) {
-		  $_SESSION['ly'] = trim($_GET['ly']);
-		  $_SESSION['new_ly'] = 'jingju|pc|'.trim($_GET['ly']);
-		}
+
+	public function filter(){
+		$fangzhuru = new fangzhuru;
+		$fangzhuru->run();
 	}
 	
 	public function createUrl(){
@@ -47,22 +45,6 @@ class app{
 			}
 
 		}
-		/*if (!empty($this->_db)) {
-			return $this->_db;
-		}else{
-
-			$this->_db = new medoo(array(
-				'database_type' => 'mysql',
-				'database_name' => 'bagecms',
-				'server' => 'localhost',
-				'username' => 'root',
-				'password' => '',
-				 
-				// optional
-				'charset' => 'utf8',
-			));
-			return $this->_db;
-		}*/
 	}
 	
 	public function render($tem='',$data=array()){
