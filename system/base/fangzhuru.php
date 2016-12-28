@@ -1,74 +1,57 @@
 <?php
-/*‘∆ÃÂºÏÕ®”√¬©∂¥∑¿ª§≤π∂°v1.1
-∏¸–¬ ±º‰£∫2013-05-25
-π¶ƒ‹Àµ√˜£∫∑¿ª§XSS,SQL,¥˙¬Î÷¥––£¨Œƒº˛∞¸∫¨µ»∂‡÷÷∏ﬂŒ£¬©∂¥
-*/
-class fangzhuru{
+/**
+ * Èò≤Ê≥®ÂÖ•Á®ãÂ∫è
+ */
 
-	public function run(){
-		$url_arr=array(
-		'xss'=>"\\=\\+\\/v(?:8|9|\\+|\\/)|\\%0acontent\\-(?:id|location|type|transfer\\-encoding)",
-		);
+class fangzhuru
+{
 
-		$args_arr=array(
-		'xss'=>"[\\'\\\"\\;\\*\\<\\>].*\\bon[a-zA-Z]{3,15}[\\s\\r\\n\\v\\f]*\\=|\\b(?:expression)\\(|\\<script[\\s\\\\\\/]|\\<\\!\\[cdata\\[|\\b(?:eval|alert|prompt|msgbox)\\s*\\(|url\\((?:\\#|data|javascript)",
+    public function run()
+    {
+        $url_arr = array(
+            'xss' => "\\=\\+\\/v(?:8|9|\\+|\\/)|\\%0acontent\\-(?:id|location|type|transfer\\-encoding)",
+        );
 
-		'sql'=>"[^\\{\\s]{1}(\\s|\\b)+(?:select\\b|update\\b|insert(?:(\\/\\*.*?\\*\\/)|(\\s)|(\\+))+into\\b).+?(?:from\\b|set\\b)|[^\\{\\s]{1}(\\s|\\b)+(?:create|delete|drop|truncate|rename|desc)(?:(\\/\\*.*?\\*\\/)|(\\s)|(\\+))+(?:table\\b|from\\b|database\\b)|into(?:(\\/\\*.*?\\*\\/)|\\s|\\+)+(?:dump|out)file\\b|\\bsleep\\([\\s]*[\\d]+[\\s]*\\)|benchmark\\(([^\\,]*)\\,([^\\,]*)\\)|(?:declare|set|select)\\b.*@|union\\b.*(?:select|all)\\b|(?:select|update|insert|create|delete|drop|grant|truncate|rename|exec|desc|from|table|database|set|where)\\b.*(charset|ascii|bin|char|uncompress|concat|concat_ws|conv|export_set|hex|instr|left|load_file|locate|mid|sub|substring|oct|reverse|right|unhex)\\(|(?:master\\.\\.sysdatabases|msysaccessobjects|msysqueries|sysmodules|mysql\\.db|sys\\.database_name|information_schema\\.|sysobjects|sp_makewebtask|xp_cmdshell|sp_oamethod|sp_addextendedproc|sp_oacreate|xp_regread|sys\\.dbms_export_extension)",
+        $args_arr = array(
+            'xss'   => "[\\'\\\"\\;\\*\\<\\>].*\\bon[a-zA-Z]{3,15}[\\s\\r\\n\\v\\f]*\\=|\\b(?:expression)\\(|\\<script[\\s\\\\\\/]|\\<\\!\\[cdata\\[|\\b(?:eval|alert|prompt|msgbox)\\s*\\(|url\\((?:\\#|data|javascript)",
 
-		'other'=>"\\.\\.[\\\\\\/].*\\%00([^0-9a-fA-F]|$)|%00[\\'\\\"\\.]");
+            'sql'   => "[^\\{\\s]{1}(\\s|\\b)+(?:select\\b|update\\b|insert(?:(\\/\\*.*?\\*\\/)|(\\s)|(\\+))+into\\b).+?(?:from\\b|set\\b)|[^\\{\\s]{1}(\\s|\\b)+(?:create|delete|drop|truncate|rename|desc)(?:(\\/\\*.*?\\*\\/)|(\\s)|(\\+))+(?:table\\b|from\\b|database\\b)|into(?:(\\/\\*.*?\\*\\/)|\\s|\\+)+(?:dump|out)file\\b|\\bsleep\\([\\s]*[\\d]+[\\s]*\\)|benchmark\\(([^\\,]*)\\,([^\\,]*)\\)|(?:declare|set|select)\\b.*@|union\\b.*(?:select|all)\\b|(?:select|update|insert|create|delete|drop|grant|truncate|rename|exec|desc|from|table|database|set|where)\\b.*(charset|ascii|bin|char|uncompress|concat|concat_ws|conv|export_set|hex|instr|left|load_file|locate|mid|sub|substring|oct|reverse|right|unhex)\\(|(?:master\\.\\.sysdatabases|msysaccessobjects|msysqueries|sysmodules|mysql\\.db|sys\\.database_name|information_schema\\.|sysobjects|sp_makewebtask|xp_cmdshell|sp_oamethod|sp_addextendedproc|sp_oacreate|xp_regread|sys\\.dbms_export_extension)",
 
-		$referer=empty($_SERVER['HTTP_REFERER']) ? array() : array($_SERVER['HTTP_REFERER']);
-		$query_string=empty($_SERVER["QUERY_STRING"]) ? array() : array($_SERVER["QUERY_STRING"]);
+            'other' => "\\.\\.[\\\\\\/].*\\%00([^0-9a-fA-F]|$)|%00[\\'\\\"\\.]");
 
-		$this->check_data($query_string,$url_arr);
-		$this->check_data($_GET,$args_arr);
-		$this->check_data($_POST,$args_arr);
-		$this->check_data($_COOKIE,$args_arr);
-		$this->check_data($referer,$args_arr);
-	}
-	
-	
-		
-	public function W_log($log)
-	{
-		$logpath=$_SERVER["DOCUMENT_ROOT"]."/log.txt";
-		$log_f=fopen($logpath,"a+");
-		fputs($log_f,$log."\r\n");
-		fclose($log_f);
-	}
-	public function check_data($arr,$v) {
-	 foreach($arr as $key=>$value)
-	 {
-		if(!is_array($key))
-		{ $this->check($key,$v);}
-		else
-		{ $this->check_data($key,$v);}
-		
-		if(!is_array($value))
-		{ $this->check($value,$v);}
-		else
-		{ $this->check_data($value,$v);}
-	 }
-	}
-	public function check($str,$v)
-	{
-		foreach($v as $key=>$value)
-		{
-		if (preg_match("/".$value."/is",$str)==1||preg_match("/".$value."/is",urlencode($str))==1)
-			{
-				//W_log("<br>IP: ".$_SERVER["REMOTE_ADDR"]."<br> ±º‰: ".strftime("%Y-%m-%d %H:%M:%S")."<br>“≥√Ê:".$_SERVER["PHP_SELF"]."<br>Ã·Ωª∑Ω Ω: ".$_SERVER["REQUEST_METHOD"]."<br>Ã·Ωª ˝æ›: ".$str);
-				print "ƒ˙µƒÃ·Ωª¥¯”–≤ª∫œ∑®≤Œ ˝,–ª–ª∫œ◊˜";
-				exit();
-			}
-		}
-	}
-	
-	
-	
-	
-	
-	
+        $referer      = empty($_SERVER['HTTP_REFERER']) ? array() : array($_SERVER['HTTP_REFERER']);
+        $query_string = empty($_SERVER["QUERY_STRING"]) ? array() : array($_SERVER["QUERY_STRING"]);
+
+        $this->check_data($query_string, $url_arr);
+        $this->check_data($_GET, $args_arr);
+        $this->check_data($_POST, $args_arr);
+        $this->check_data($_COOKIE, $args_arr);
+        $this->check_data($referer, $args_arr);
+    }
+
+    public function W_log($log)
+    {
+        $logpath = $_SERVER["DOCUMENT_ROOT"] . "/log.txt";
+        $log_f   = fopen($logpath, "a+");
+        fputs($log_f, $log . "\r\n");
+        fclose($log_f);
+    }
+    public function check_data($arr, $v)
+    {
+        foreach ($arr as $key => $value) {
+            if (!is_array($key)) {$this->check($key, $v);} else { $this->check_data($key, $v);}
+
+            if (!is_array($value)) {$this->check($value, $v);} else { $this->check_data($value, $v);}
+        }
+    }
+    public function check($str, $v)
+    {
+        foreach ($v as $key => $value) {
+            if (preg_match("/" . $value . "/is", $str) == 1 || preg_match("/" . $value . "/is", urlencode($str)) == 1) {
+                
+                exit();
+            }
+        }
+    }
 
 }
-
-?>
